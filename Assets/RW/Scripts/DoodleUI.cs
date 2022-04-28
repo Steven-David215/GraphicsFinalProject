@@ -40,6 +40,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
+
 
 
 public class DoodleUI : MonoBehaviour
@@ -52,6 +55,9 @@ public class DoodleUI : MonoBehaviour
     public GameObject scanSurfacePanel;
     public GameObject doodlePanel;
 
+    public ARPlaneManager planeManager;
+    public bool arMode;
+
     [SerializeField] Text unitText;
     
     // Start is called before the first frame update
@@ -60,9 +66,23 @@ public class DoodleUI : MonoBehaviour
         // Define the boundry of the doodle pen prevent conflict UI touches
         SetPenDrawingBound();
 
-        // Setup for Non AR. Directly show the doodle UI 
-        SetDoodleUIVisible(true);
-        SetCoachingUIVisible(false);
+        if (arMode)
+        {
+            // 1
+            SetDoodleUIVisible(false);
+            SetCoachingUIVisible(true);
+
+            // 2
+            planeManager.planesChanged += PlanesChanged;
+        }
+        else
+        {
+            // 3
+            SetDoodleUIVisible(true);
+            SetCoachingUIVisible(false);
+        }
+
+
     }
 
 
@@ -122,4 +142,16 @@ public class DoodleUI : MonoBehaviour
             unitText.text = string.Format("{0:0.0} cm", (value * 0.1f));
         }
     }
+
+    private void PlanesChanged(ARPlanesChangedEventArgs planeEvent)
+    {
+        if (planeEvent.added.Count > 0 || planeEvent.updated.Count > 0)
+        {
+            SetDoodleUIVisible(true);
+            SetCoachingUIVisible(false);
+
+            planeManager.planesChanged -= PlanesChanged;
+        }
+    }
+
 }
