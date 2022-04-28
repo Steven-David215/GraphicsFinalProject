@@ -39,6 +39,9 @@ DEALINGS IN THE SOFTWARE.
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.ARFoundation;
+using UnityEngine.XR.ARSubsystems;
+
 
 
 public class DoodlePen : MonoBehaviour
@@ -52,6 +55,9 @@ public class DoodlePen : MonoBehaviour
     public Gradient[] colorTheme = null;
 
     public float drawingBound = 0;      // The lower bound where touch is valid
+    
+    public ARRaycastManager raycastManager;
+    public bool arMode = false;
 
     private int mySelectedColorIndex = 0;
     private float myLineWidth = 0.005f;
@@ -128,9 +134,16 @@ public class DoodlePen : MonoBehaviour
 
     void SetupRaycastLogic(DoodleLine doodleLine)
     {
-        doodleLine.raycastDelegate = GetNonArRaycastLogic;
-        
+        if (arMode)
+        {
+            doodleLine.raycastDelegate = GetArRaycastLogic;
+        }
+        else
+        {
+            doodleLine.raycastDelegate = GetNonArRaycastLogic;
+        }
         doodleLine.gameObject.SetActive(true);
+
     }
 
     bool GetNonArRaycastLogic(out Vector3 hitPosition)
@@ -152,5 +165,27 @@ public class DoodlePen : MonoBehaviour
             return false;
         }
     }
-    
+
+    bool GetArRaycastLogic(out Vector3 hitPosition)
+    {
+
+        // 1
+        var hits = new List<ARRaycastHit>();
+
+        // 2
+        bool hasHit = raycastManager.Raycast(Input.mousePosition, hits, TrackableType.PlaneWithinInfinity);
+
+        // 3
+        if (hasHit == false || hits.Count == 0)
+        {
+            hitPosition = Vector3.zero;
+            return false;
+        }
+        else
+        {
+            hitPosition = hits[0].pose.position;
+            return true;
+        }
+    }
+
 }
